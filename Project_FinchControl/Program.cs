@@ -14,7 +14,7 @@ namespace Project_FinchControl
     // Application Type: Console
     // Author: Taber, Jake
     // Dated Created: 2/17/2021
-    // Last Modified: 2/20/2021
+    // Last Modified: 2/27/2021
     //
     // **************************************************
 
@@ -398,7 +398,7 @@ namespace Project_FinchControl
         #endregion
 
         #region DATA RECORDER
-        
+
         /// <summary>
         /// *****************************************************************
         /// *                     Data Recorder                          *
@@ -406,13 +406,220 @@ namespace Project_FinchControl
         /// </summary>
         static void DataRecorderDisplayMenuScreen(Finch finchRobot)
         {
+            Console.CursorVisible = true;
+
+            int numberOfDataPoints = 0;
+            double dataPointFrequency = 0;
+            double[] temperatures = null;
+
+            bool quitDataRecorderMenu = false;
+            string menuChoice;
+
+            do
+            {
+                DisplayScreenHeader("Data Recorder Menu");
+
+                //
+                // get user menu choice
+                //
+                Console.WriteLine("\ta) Number of Data Points");
+                Console.WriteLine("\tb) Frequency of Data Points");
+                Console.WriteLine("\tc) Get Data");
+                Console.WriteLine("\td) Show Data");
+                Console.WriteLine("\tq) Main Menu");
+                Console.Write("\t\tEnter Choice:");
+                menuChoice = Console.ReadLine().ToLower();
+
+                //
+                // process user menu choice
+                //
+                switch (menuChoice)
+                {
+                    case "a":
+                        numberOfDataPoints = DataRecorderDisplayGetNumberOfDataPoints(finchRobot);
+                        break;
+
+                    case "b":
+                        dataPointFrequency = DataRecorderDisplayGetNumberOfDataPointsFrequency(finchRobot);
+                        break;
+
+                    case "c":
+                        temperatures = DataRecorderDisplayGetData(numberOfDataPoints, dataPointFrequency, finchRobot);
+                        break;
+
+                    case "d":
+                        DataRecorderDisplayGetData(temperatures);
+                        break;
+
+                    case "q":
+                        quitDataRecorderMenu = true;
+                        break;
+
+                    default:
+                        Console.WriteLine();
+                        Console.WriteLine("\tPlease enter a letter for the menu choice.");
+                        DisplayContinuePrompt();
+                        break;
+                }
+
+            } while (!quitDataRecorderMenu);
+        }
+        
+        ///Show data in table format
+        private static void DataRecorderDisplayGetData(double[] temperatures)
+        {
+            DisplayScreenHeader("Show Data");
+
+            DataRecorderDisplayTable(temperatures);
+
+            DisplayContinuePrompt(); 
+        }
+
+        ///Create table and refactor it for future use
+        static void DataRecorderDisplayTable(double[] temperatures)
+        {
+            Console.WriteLine(
+            "Recording #".PadLeft(15) +
+             "Temp".PadLeft(15)
+             );
+            Console.WriteLine(
+                "...........".PadLeft(15) +
+                "...........".PadLeft(15)
+                );
+
+            for (int index = 0; index < temperatures.Length; index++)
+            {
+                Console.WriteLine(
+                  (index + 1).ToString().PadLeft(15) +
+                  temperatures[index].ToString("n2").PadLeft(15)
+                  );
+
+            }
+        }
+
+        /// <summary>
+        /// Get Data From Finch
+        /// </summary>
+        /// <param name="numberOfDataPoints"></param>
+        /// <param name="dataPointFrequency"></param>
+        /// <param name="finchRobot"></param>
+        /// <returns></returns>
+        static double[] DataRecorderDisplayGetData(int numberOfDataPoints, double dataPointFrequency, Finch finchRobot)
+        {
+            double[] tempatures = new double[numberOfDataPoints];
+            string userResponse;
+            
+            DisplayScreenHeader("Get Data");
+
+            Console.WriteLine($"Number of Data Points: {numberOfDataPoints}");
+            Console.WriteLine($"Data point frequency: {dataPointFrequency}");
+            Console.WriteLine();
+            Console.WriteLine("The finch robot is ready to begin recording the data!");
+            DisplayContinuePrompt();
+
+            for (int index = 0; index < numberOfDataPoints; index++)
+            {
+                tempatures[index] = finchRobot.getTemperature();
+                Console.WriteLine($"\tReading {index + 1}: {tempatures[index].ToString("n2")}");
+                int waitInSeconds = (int)(dataPointFrequency * 1000);
+                finchRobot.noteOn(1047);
+                finchRobot.wait(waitInSeconds);
+                finchRobot.noteOff();
+
+            }
+
+            ///Ask the user if they want to see the table or not
+            Console.WriteLine();
+            Console.WriteLine("Would you like to display the data chart now?");
+            Console.CursorVisible = true;
+            userResponse = Console.ReadLine();
             Console.CursorVisible = false;
 
-            Console.Clear();
-            Console.WriteLine("\t Data Reccorder");
-            Console.WriteLine();
-            Console.WriteLine("This module is still in devolpment. Please wait for future devolpments!");
+            
+            if (userResponse == "yes")
+                DataRecorderDisplayTable(tempatures);
+            else
+                Console.WriteLine("No worries. If you want to view the table, choose Show Data on the Data Recorder Menu");
+
             DisplayContinuePrompt();
+
+            return tempatures;
+        }
+
+        /// <summary>
+        /// Data Point Frequency
+        /// </summary>
+        /// <param name="finchRobot"></param>
+        /// <returns></returns>
+        static double DataRecorderDisplayGetNumberOfDataPointsFrequency(Finch finchRobot)
+        {
+            double dataPointFrequency;
+            string userResponse;
+            bool validResponse;
+            do
+            {
+                DisplayScreenHeader("Data Point Frequency");
+
+                Console.Write("What's the frequency that you would like proccessed?:");
+                Console.CursorVisible = true;
+                userResponse = Console.ReadLine();
+
+                if (!double.TryParse(userResponse, out dataPointFrequency))
+                {
+                    validResponse = false;
+
+                    Console.WriteLine();
+                    Console.WriteLine("Please enter an interger value");
+                    Console.CursorVisible = false;
+                    DisplayContinuePrompt();
+                }
+                else
+                {
+                    Console.CursorVisible = false;
+                    Console.WriteLine("The data point frequency will be " + dataPointFrequency);
+                    DisplayContinuePrompt();
+                }
+
+                return dataPointFrequency;
+            } while (!validResponse);
+        }
+        /// <summary>
+        /// Number of Data Points
+        /// </summary>
+        /// <param name="finchRobot"></param>
+        /// <returns></returns>
+        static int DataRecorderDisplayGetNumberOfDataPoints(Finch finchRobot)
+        {
+            int numberOfDataPoints;
+            string userResponse;
+            bool validResponse;
+            do
+            {
+                DisplayScreenHeader("Number of Data Points");
+
+                Console.Write("How many data points would you like to process?:");
+                Console.CursorVisible = true;
+                userResponse = Console.ReadLine();
+
+                if(!int.TryParse(userResponse, out numberOfDataPoints))
+                {
+                    validResponse = false;
+
+                    Console.WriteLine();
+                    Console.WriteLine("Please enter an interger value");
+                    Console.CursorVisible = false;
+                    DisplayContinuePrompt();
+                }
+                else
+                {
+                    Console.CursorVisible = false;
+                    Console.WriteLine("The data point value will be " + numberOfDataPoints);
+                    DisplayContinuePrompt();
+                }
+
+                return numberOfDataPoints;
+                
+            } while (!validResponse);
         }
         #endregion
 
@@ -524,16 +731,17 @@ namespace Project_FinchControl
                 finchRobot.wait(100);
                 finchRobot.noteOff();
                 finchRobot.setLED(0, 0, 0);
+
+                Console.WriteLine("\tThe Finch is now connected and ready for use!");
+               
             }
             else
             {
                 Console.WriteLine();
-                Console.WriteLine("\tUnable to connect to Finch robot, please check your USB connections and restart the program to try connecting again.");
+                Console.WriteLine("Unable to connect to Finch robot, please check your USB connections and restart the program to try connecting again.");
             }
 
-            Console.WriteLine("The Finch is now connected and ready for use!");
             DisplayMenuPrompt("Main Menu");
-
             return robotConnected;
         }
 
