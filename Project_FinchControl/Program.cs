@@ -9,12 +9,11 @@ namespace Project_FinchControl
     // **************************************************
     //
     // Title: Finch Control - Talent Show
-    // Description: A small demo of the Finch robot, demonstarting
-    //              its lights, sound and movement.
+    // Description: Completed Finch Project, Includes Custom Themes, User Programming, Movement, Sound and Lights, Tempature readings and light sensor readings.
     // Application Type: Console
     // Author: Taber, Jake
     // Dated Created: 2/17/2021
-    // Last Modified: 3/6/2021
+    // Last Modified: 3/28/2021
     //
     // **************************************************
 
@@ -46,9 +45,9 @@ namespace Project_FinchControl
         /// <param name="args"></param>
         static void Main(string[] args)
         {
-            SetTheme();
-
+            SetDefualtTheme();
             DisplayWelcomeScreen();
+            DisplayConsoleColors();
             DisplayMenuScreen();
             DisplayClosingScreen();
         }
@@ -56,7 +55,7 @@ namespace Project_FinchControl
         /// <summary>
         /// setup the console theme
         /// </summary>
-        static void SetTheme()
+        static void SetDefualtTheme()
         {
             Console.ForegroundColor = ConsoleColor.Cyan;
             Console.BackgroundColor = ConsoleColor.Black;
@@ -90,7 +89,8 @@ namespace Project_FinchControl
                 Console.WriteLine("\tc) Data Recorder");
                 Console.WriteLine("\td) Light Alarm System");
                 Console.WriteLine("\te) User Programming");
-                Console.WriteLine("\tf) Disconnect Finch Robot");
+                Console.WriteLine("\tf) Change Console Colors");
+                Console.WriteLine("\tg) Disconnect Finch Robot");
                 Console.WriteLine("\tq) Quit");
                 Console.Write("\t\tEnter Choice:");
                 menuChoice = Console.ReadLine().ToLower();
@@ -121,6 +121,10 @@ namespace Project_FinchControl
                         break;
 
                     case "f":
+                        DisplayConsoleColors();
+                        break;
+
+                    case "g":
                         DisplayDisconnectFinchRobot(finchRobot);
                         break;
 
@@ -1371,6 +1375,115 @@ namespace Project_FinchControl
             DisplayMenuPrompt("Main Menu");
             return robotConnected;
         }
+
+        #endregion
+
+        #region THEME CHANGE
+        
+        /// <summary>
+        /// Theme change
+        /// </summary>
+        static void DisplayConsoleColors()
+        {
+            (ConsoleColor foregroundColor, ConsoleColor backgroundColor) themeColors;
+            bool themeChosen = false;
+
+            themeColors = ReadThemeData();
+            Console.ForegroundColor = themeColors.foregroundColor;
+            Console.BackgroundColor = themeColors.backgroundColor;
+            DisplayScreenHeader("Set Console Colors");
+            Console.WriteLine($"\tCurrent foreground color: {Console.ForegroundColor}");
+            Console.WriteLine($"\tCurrent foreground color: {Console.BackgroundColor}");
+            Console.CursorVisible = true;
+            Console.WriteLine();
+
+            Console.Write("\tWould you like to change the current theme [ yes | no ]?");
+            if (Console.ReadLine().ToLower() == "yes")
+            {
+                do
+                {
+                    themeColors.foregroundColor = GetConsoleColorFromUser("foreground");
+                    themeColors.backgroundColor = GetConsoleColorFromUser("background");
+
+                    //
+                    // set new theme
+                    //
+                    Console.ForegroundColor = themeColors.foregroundColor;
+                    Console.BackgroundColor = themeColors.backgroundColor;
+                    Console.Clear();
+                    DisplayScreenHeader("Set Console Colors");
+                    Console.WriteLine($"\tNew foreground color: {Console.ForegroundColor}");
+                    Console.WriteLine($"\tNew foreground color: {Console.BackgroundColor}");
+
+                    Console.WriteLine();
+                    Console.Write("\tWould you like to use this theme?");
+                    if (Console.ReadLine().ToLower() == "yes")
+                    {
+                        themeChosen = true;
+                        WriteThemeData(themeColors.foregroundColor, themeColors.backgroundColor);
+                    }
+                } while (!themeChosen);
+            }
+            DisplayContinuePrompt();
+        }
+
+        /// <summary>
+        /// Get colors from user
+        /// </summary>
+        static ConsoleColor GetConsoleColorFromUser(string property)
+        {
+            ConsoleColor consoleColor;
+            bool validConsoleColor;
+
+            do
+            {
+                Console.Write($"\tEnter a vaule for the {property}:");
+                validConsoleColor = Enum.TryParse<ConsoleColor>(Console.ReadLine(), true, out consoleColor);
+
+                if (!validConsoleColor)
+                {
+                    Console.WriteLine("\n\t Please enter a valid console color\n");
+                }
+                else
+                {
+                    validConsoleColor = true;
+                }
+            } while (!validConsoleColor);
+
+            return consoleColor;
+        }
+
+        /// <summary>
+        /// Read data from file
+        /// </summary>
+        static (ConsoleColor foregroundColor, ConsoleColor backgroundColor) ReadThemeData()
+        {
+            string dataPath = @"Data/Theme.txt";
+            string[] themeColors;
+
+            ConsoleColor foregroundColor;
+            ConsoleColor backgroundColor;
+
+            themeColors = File.ReadAllLines(dataPath);
+
+            Enum.TryParse(themeColors[0], true, out foregroundColor);
+            Enum.TryParse(themeColors[1], true, out backgroundColor);
+
+            return (foregroundColor, backgroundColor);
+
+        }
+        /// <summary>
+        /// Write data from file
+        /// </summary>
+        static void WriteThemeData(ConsoleColor foreground, ConsoleColor background)
+        {
+            string dataPath = @"Data/Theme.txt";
+
+            File.WriteAllText(dataPath, foreground.ToString() + "\n");
+            File.AppendAllText(dataPath, background.ToString());
+
+        }
+
 
         #endregion
 
